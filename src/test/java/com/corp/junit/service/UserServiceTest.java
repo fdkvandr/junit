@@ -50,6 +50,7 @@ class UserServiceTest {
     }
 
     @Test
+    @Tag("login")
     void throwExceptionIfUsernameOrPasswordIsNull() {
         assertAll(
                 () -> {
@@ -64,6 +65,7 @@ class UserServiceTest {
     }
 
     @Test
+    @Tag("login")
     void loginSuccessIfUserExists() {
         userService.add(IVAN);
         Optional<UserDto> maybeUserDto = userService.login(IVAN.getUsername(), IVAN.getPassword());
@@ -84,6 +86,7 @@ class UserServiceTest {
     }
 
     @Test
+    @Tag("login")
     void loginFailIfPasswordIsNotCorrect() {
         userService.add(IVAN);
         Optional<UserDto> maybeUserDto = userService.login(IVAN.getUsername(), "dummy");
@@ -91,6 +94,7 @@ class UserServiceTest {
     }
 
     @Test
+    @Tag("login")
     void loginFailIfUserDoesNotExist() {
         userService.add(IVAN);
         Optional<UserDto> maybeUserDto = userService.login("dummy", "dummy");
