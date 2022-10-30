@@ -1,12 +1,17 @@
 package com.corp.junit.service;
 
 import com.corp.junit.dto.UserDto;
+import org.hamcrest.MatcherAssert;
+import org.hamcrest.collection.IsCollectionWithSize;
+import org.hamcrest.collection.IsMapContaining;
 import org.junit.jupiter.api.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -31,25 +36,38 @@ class UserServiceTest {
     @Test
     void usersEmptyIfNotUserAdded() {
         System.out.println("Test 1: " + this);
-        var users = userService.getAll();
-        assertTrue(users.isEmpty(), () -> "User list should be empty");
+        var userDtoList = userService.getAll();
+        assertTrue(userDtoList.isEmpty(), () -> "User list should be empty");
     }
 
     @Test
     void usersSizeIfUserAdded() {
         System.out.println("Test 2: " + this);
-        userService.add(IVAN);
-        userService.add(PETR);
+        userService.add(IVAN, PETR);
         List<UserDto> userDtoList = userService.getAll();
-        assertEquals(2, userDtoList.size());
+//        assertEquals(2, userDtoList.size());
+        assertThat(userDtoList).hasSize(2);
+        MatcherAssert.assertThat(userDtoList, IsCollectionWithSize.hasSize(2));
     }
 
     @Test
     void loginSuccessIfUserExists() {
         userService.add(IVAN);
         Optional<UserDto> maybeUserDto = userService.login(IVAN.getUsername(), IVAN.getPassword());
-        assertTrue(maybeUserDto.isPresent());
-        maybeUserDto.ifPresent(userDto -> assertEquals(IVAN, userDto));
+//        assertTrue(maybeUserDto.isPresent());
+//        maybeUserDto.ifPresent(userDto -> assertEquals(IVAN, userDto));
+        assertThat(maybeUserDto).isPresent();
+        maybeUserDto.ifPresent(userDto -> assertThat(userDto).isEqualTo(maybeUserDto.get()));
+    }
+
+    @Test
+    void usersConvertedToMapById() {
+        userService.add(IVAN, PETR);
+        Map<Integer, UserDto> userDtoMap = userService.getAllConvertedById();
+        assertAll(() -> assertThat(userDtoMap).containsKeys(IVAN.getId(), PETR.getId()),
+                () -> assertThat(userDtoMap).containsValues(IVAN, PETR));
+
+        MatcherAssert.assertThat(userDtoMap, IsMapContaining.hasKey(IVAN.getId()));
     }
 
     @Test
