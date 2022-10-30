@@ -11,8 +11,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertAll;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class UserServiceTest {
@@ -48,6 +47,20 @@ class UserServiceTest {
 //        assertEquals(2, userDtoList.size());
         assertThat(userDtoList).hasSize(2);
         MatcherAssert.assertThat(userDtoList, IsCollectionWithSize.hasSize(2));
+    }
+
+    @Test
+    void throwExceptionIfUsernameOrPasswordIsNull() {
+        assertAll(
+                () -> {
+                    var e = assertThrows(IllegalArgumentException.class, () -> userService.login(null, "dummy"));
+                    assertThat(e.getMessage()).isEqualTo("username or password is null");
+                },
+                () -> {
+                    var e = assertThrows(IllegalArgumentException.class, () -> userService.login("dummy", null));
+                    assertThat(e.getMessage()).isEqualTo("username or password is null");
+                }
+        );
     }
 
     @Test
