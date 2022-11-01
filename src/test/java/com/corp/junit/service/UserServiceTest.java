@@ -1,10 +1,12 @@
 package com.corp.junit.service;
 
 import com.corp.junit.dto.UserDto;
+import com.corp.junit.paramresolver.UserServiceParamResolver;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.collection.IsCollectionWithSize;
 import org.hamcrest.collection.IsMapContaining;
 import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.util.List;
 import java.util.Map;
@@ -13,6 +15,8 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
+@ExtendWith({UserServiceParamResolver.class})
+@TestMethodOrder(MethodOrderer.DisplayName.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class UserServiceTest {
 
@@ -20,6 +24,9 @@ class UserServiceTest {
     private static final UserDto IVAN = UserDto.of(1, "Ivan", "123");
     private static final UserDto PETR = UserDto.of(2, "Petr", "111");
 
+    UserServiceTest(TestInfo testInfo) {
+
+    }
 
     @BeforeAll
     void init() {
@@ -27,12 +34,13 @@ class UserServiceTest {
     }
 
     @BeforeEach
-    void prepare() {
+    void prepare(UserService userService) {
         System.out.println("Before each: " + this);
-        userService = new UserService();
+        this.userService = userService;
     }
 
     @Test
+    @Order(3)
     void usersEmptyIfNotUserAdded() {
         System.out.println("Test 1: " + this);
         var userDtoList = userService.getAll();
@@ -40,6 +48,7 @@ class UserServiceTest {
     }
 
     @Test
+    @Order(1)
     void usersSizeIfUserAdded() {
         System.out.println("Test 2: " + this);
         userService.add(IVAN, PETR);
@@ -47,32 +56,6 @@ class UserServiceTest {
 //        assertEquals(2, userDtoList.size());
         assertThat(userDtoList).hasSize(2);
         MatcherAssert.assertThat(userDtoList, IsCollectionWithSize.hasSize(2));
-    }
-
-    @Test
-    @Tag("login")
-    void throwExceptionIfUsernameOrPasswordIsNull() {
-        assertAll(
-                () -> {
-                    var e = assertThrows(IllegalArgumentException.class, () -> userService.login(null, "dummy"));
-                    assertThat(e.getMessage()).isEqualTo("username or password is null");
-                },
-                () -> {
-                    var e = assertThrows(IllegalArgumentException.class, () -> userService.login("dummy", null));
-                    assertThat(e.getMessage()).isEqualTo("username or password is null");
-                }
-        );
-    }
-
-    @Test
-    @Tag("login")
-    void loginSuccessIfUserExists() {
-        userService.add(IVAN);
-        Optional<UserDto> maybeUserDto = userService.login(IVAN.getUsername(), IVAN.getPassword());
-//        assertTrue(maybeUserDto.isPresent());
-//        maybeUserDto.ifPresent(userDto -> assertEquals(IVAN, userDto));
-        assertThat(maybeUserDto).isPresent();
-        maybeUserDto.ifPresent(userDto -> assertThat(userDto).isEqualTo(maybeUserDto.get()));
     }
 
     @Test
@@ -85,22 +68,6 @@ class UserServiceTest {
         MatcherAssert.assertThat(userDtoMap, IsMapContaining.hasKey(IVAN.getId()));
     }
 
-    @Test
-    @Tag("login")
-    void loginFailIfPasswordIsNotCorrect() {
-        userService.add(IVAN);
-        Optional<UserDto> maybeUserDto = userService.login(IVAN.getUsername(), "dummy");
-        assertTrue(maybeUserDto.isEmpty());
-    }
-
-    @Test
-    @Tag("login")
-    void loginFailIfUserDoesNotExist() {
-        userService.add(IVAN);
-        Optional<UserDto> maybeUserDto = userService.login("dummy", "dummy");
-        assertTrue(maybeUserDto.isEmpty());
-    }
-
     @AfterEach
     void deleteDataFromDatabase() {
         System.out.println("After each: " + this);
@@ -109,5 +76,50 @@ class UserServiceTest {
     @AfterAll
     void closeConnectionPool() {
         System.out.println("After all: " + this);
+    }
+
+    @DisplayName("test user login functionality")
+    @Tag("login")
+    @Nested
+    class LoginTest {
+
+        @Test
+        void loginFailIfPasswordIsNotCorrect() {
+            userService.add(IVAN);
+            Optional<UserDto> maybeUserDto = userService.login(IVAN.getUsername(), "dummy");
+            assertTrue(maybeUserDto.isEmpty());
+        }
+
+        @Test
+        void loginFailIfUserDoesNotExist() {
+            userService.add(IVAN);
+            Optional<UserDto> maybeUserDto = userService.login("dummy", "dummy");
+            assertTrue(maybeUserDto.isEmpty());
+        }
+
+        @Test
+        void loginSuccessIfUserExists() {
+            userService.add(IVAN);
+            Optional<UserDto> maybeUserDto = userService.login(IVAN.getUsername(), IVAN.getPassword());
+//        assertTrue(maybeUserDto.isPresent());
+//        maybeUserDto.ifPresent(userDto -> assertEquals(IVAN, userDto));
+            assertThat(maybeUserDto).isPresent();
+            maybeUserDto.ifPresent(userDto -> assertThat(userDto).isEqualTo(maybeUserDto.get()));
+        }
+
+        @Test
+        @Order(2)
+        void throwExceptionIfUsernameOrPasswordIsNull() {
+            assertAll(
+                    () -> {
+                        var e = assertThrows(IllegalArgumentException.class, () -> userService.login(null, "dummy"));
+                        assertThat(e.getMessage()).isEqualTo("username or password is null");
+                    },
+                    () -> {
+                        var e = assertThrows(IllegalArgumentException.class, () -> userService.login("dummy", null));
+                        assertThat(e.getMessage()).isEqualTo("username or password is null");
+                    }
+            );
+        }
     }
 }
