@@ -7,10 +7,13 @@ import org.hamcrest.collection.IsCollectionWithSize;
 import org.hamcrest.collection.IsMapContaining;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.*;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
@@ -121,5 +124,33 @@ class UserServiceTest {
                     }
             );
         }
+
+        @ParameterizedTest(name = "{arguments} test")
+//    @ArgumentsSource()
+//        @NullSource
+//        @EmptySource
+//    @NullAndEmptySource
+//        @ValueSource(strings = {"Ivan", "Petr"})
+//    @EnumSource
+        @MethodSource("com.corp.junit.service.UserServiceTest#getArgumentsForLoginTest")
+//        @CsvFileSource(resources = "/login-test-data.csv", delimiter = ',', numLinesToSkip = 1)
+//        @CsvSource({"Ivan,123", "Petr,111"})
+        void loginParameterizedTest(String username, String password, Optional<UserDto> userDto) {
+            userService.add(IVAN, PETR);
+
+            var mayBeUserDto = userService.login(username, password);
+            assertThat(mayBeUserDto).isEqualTo(userDto);
+        }
+
+    }
+
+    static Stream<Arguments> getArgumentsForLoginTest() {
+        return Stream.of(
+                Arguments.of("Ivan", "123", Optional.of(IVAN)),
+                Arguments.of("Petr", "111", Optional.of(PETR)),
+                Arguments.of("Petr", "dummy", Optional.empty()),
+                Arguments.of("dummy", "123", Optional.empty()
+                )
+        );
     }
 }
