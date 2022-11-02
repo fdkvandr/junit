@@ -10,6 +10,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.*;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -40,6 +41,23 @@ class UserServiceTest {
     void prepare(UserService userService) {
         System.out.println("Before each: " + this);
         this.userService = userService;
+    }
+
+    @Test
+//    @Disabled
+//    @RepeatedTest(3)
+    void checkLoginFunctionalityPerformance() {
+        assertTimeout(Duration.ofMillis(299L), () -> userService.login("dummy", "111"));
+
+        System.out.println(Thread.currentThread()
+                                 .getName());
+        assertTimeoutPreemptively(Duration.ofMillis(299L), () -> {
+                    Thread.sleep(300L);
+                    System.out.println(Thread.currentThread().getName());
+                    userService.login("dummy", "111");
+                }
+
+        );
     }
 
     @Test
