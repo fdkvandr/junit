@@ -1,14 +1,19 @@
 package com.corp.junit.service;
 
+import com.corp.junit.TestBase;
 import com.corp.junit.dto.UserDto;
-import com.corp.junit.paramresolver.UserServiceParamResolver;
+import com.corp.junit.extension.ConditionalExtension;
+import com.corp.junit.extension.PostProcessionExtension;
+import com.corp.junit.extension.ThrowableExtension;
+import com.corp.junit.extension.UserServiceParamResolver;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.collection.IsCollectionWithSize;
 import org.hamcrest.collection.IsMapContaining;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.*;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.time.Duration;
 import java.util.List;
@@ -19,10 +24,14 @@ import java.util.stream.Stream;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
-@ExtendWith({UserServiceParamResolver.class})
+@ExtendWith({UserServiceParamResolver.class,
+        //GlobalExtension.class
+        PostProcessionExtension.class,
+        ConditionalExtension.class,
+        ThrowableExtension.class,})
 @TestMethodOrder(MethodOrderer.DisplayName.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class UserServiceTest {
+class UserServiceTest extends TestBase {
 
     private UserService userService;
     private static final UserDto IVAN = UserDto.of(1, "Ivan", "123");
@@ -52,8 +61,9 @@ class UserServiceTest {
         System.out.println(Thread.currentThread()
                                  .getName());
         assertTimeoutPreemptively(Duration.ofMillis(299L), () -> {
-                    Thread.sleep(300L);
-                    System.out.println(Thread.currentThread().getName());
+//                    Thread.sleep(300L);
+                    System.out.println(Thread.currentThread()
+                                             .getName());
                     userService.login("dummy", "111");
                 }
 

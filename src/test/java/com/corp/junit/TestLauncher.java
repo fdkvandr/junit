@@ -1,4 +1,4 @@
-package com.corp.junit.service;
+package com.corp.junit;
 
 import org.junit.platform.engine.discovery.DiscoverySelectors;
 import org.junit.platform.launcher.LauncherDiscoveryRequest;
