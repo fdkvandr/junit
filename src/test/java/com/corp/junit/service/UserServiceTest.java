@@ -14,8 +14,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Mockito;
+import org.mockito.*;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.Duration;
 import java.util.List;
@@ -31,19 +31,25 @@ import static org.junit.jupiter.api.Assertions.*;
         PostProcessionExtension.class,
         ConditionalExtension.class,
 //        ThrowableExtension.class,
+        MockitoExtension.class,
 })
 @TestMethodOrder(MethodOrderer.DisplayName.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class UserServiceTest extends TestBase {
-
-    private UserService userService;
+    @Mock
     private UserDao userDao;
+    @InjectMocks
+    private UserService userService;
+    @Captor
+    private ArgumentCaptor<Integer> argumentCaptor;
     private static final UserDto IVAN = UserDto.of(1, "Ivan", "123");
     private static final UserDto PETR = UserDto.of(2, "Petr", "111");
 
-    UserServiceTest(TestInfo testInfo) {
 
-    }
+//    DI example
+//    UserServiceTest(TestInfo testInfo) {
+//
+//    }
 
     @BeforeAll
     void init() {
@@ -53,9 +59,10 @@ class UserServiceTest extends TestBase {
     @BeforeEach
     void prepare() {
         System.out.println("Before each: " + this);
-        this.userDao = Mockito.spy(new UserDao());
+//        this.userDao = Mockito.mock(UserDao.class);
         this.userService = new UserService(userDao);
     }
+
 
     @Test
     void shouldDeleteExistedUser() {
@@ -70,11 +77,12 @@ class UserServiceTest extends TestBase {
 //               .thenReturn(true) // При первом вызове вернет true
 //               .thenReturn(false); // при втором - false
 
-        var argumentCaptor = ArgumentCaptor.forClass(Integer.class);
+//        var argumentCaptor = ArgumentCaptor.forClass(Integer.class);
         Mockito.verify(userDao, Mockito.times(1)).delete(argumentCaptor.capture());
         assertThat(argumentCaptor.getValue()).isEqualTo(IVAN.getId());
         assertThat(deleteResult).isTrue();
     }
+
 
     @Test
 //    @Disabled
@@ -99,7 +107,7 @@ class UserServiceTest extends TestBase {
     void usersEmptyIfNotUserAdded() {
         System.out.println("Test 1: " + this);
         var userDtoList = userService.getAll();
-        assertTrue(userDtoList.isEmpty(), () -> "User list should be empty");
+        assertTrue(userDtoList.isEmpty(), "User list should be empty");
     }
 
     @Test
