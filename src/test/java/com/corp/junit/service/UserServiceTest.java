@@ -1,10 +1,10 @@
 package com.corp.junit.service;
 
 import com.corp.junit.TestBase;
+import com.corp.junit.dao.UserDao;
 import com.corp.junit.dto.UserDto;
 import com.corp.junit.extension.ConditionalExtension;
 import com.corp.junit.extension.PostProcessionExtension;
-import com.corp.junit.extension.ThrowableExtension;
 import com.corp.junit.extension.UserServiceParamResolver;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.collection.IsCollectionWithSize;
@@ -14,6 +14,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.mockito.Mockito;
 
 import java.time.Duration;
 import java.util.List;
@@ -28,12 +29,14 @@ import static org.junit.jupiter.api.Assertions.*;
         //GlobalExtension.class
         PostProcessionExtension.class,
         ConditionalExtension.class,
-        ThrowableExtension.class,})
+//        ThrowableExtension.class,
+})
 @TestMethodOrder(MethodOrderer.DisplayName.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class UserServiceTest extends TestBase {
 
     private UserService userService;
+    private UserDao userDao;
     private static final UserDto IVAN = UserDto.of(1, "Ivan", "123");
     private static final UserDto PETR = UserDto.of(2, "Petr", "111");
 
@@ -47,9 +50,26 @@ class UserServiceTest extends TestBase {
     }
 
     @BeforeEach
-    void prepare(UserService userService) {
+    void prepare() {
         System.out.println("Before each: " + this);
-        this.userService = userService;
+        this.userDao = Mockito.mock(UserDao.class);
+        this.userService = new UserService(userDao);
+    }
+
+    @Test
+    void shouldDeleteExistedUser() {
+        userService.add(IVAN);
+        Mockito.doReturn(true)
+               .when(userDao)
+               .delete(Mockito.any());
+        boolean deleteResult = userService.delete(IVAN.getId());
+
+//        Такой способ тоже работает, но лучше его не использовать (Первый предпочтительнее), т.к. он имеет ряд ограничений. Но он удобен, если мы хотим последовательно возвращать значения, в случае если мы несколько раз будем вызывать метод delete
+//        Mockito.when(userDao.delete(Mockito.any()))
+//               .thenReturn(true) // При первом вызове вернет true
+//               .thenReturn(false); // при втором - false
+
+        assertThat(deleteResult).isTrue();
     }
 
     @Test
